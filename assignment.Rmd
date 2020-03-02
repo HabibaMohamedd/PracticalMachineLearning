@@ -1,0 +1,49 @@
+---
+title: "practicalMachineAssig"
+author: "Habiba Mohamed"
+date: "3/2/2020"
+output: html_document
+---
+# Load and Process data 
+```{r loadAndProcess , echo=TRUE}
+setwd("F:/Habeba/Data Science/Slides/8.Practical Machine Learning/Week 4/Assignment")
+train_data <- read.csv("pml-training.csv", header=TRUE, na.strings=c("NA", "", "#DIV/0!"))
+test_data <- read.csv("pml-testing.csv", header=TRUE, na.strings=c("NA", "", "#DIV/0!"))
+```
+### Remove coulmns that are not needed and have alot of NAs
+```{r remove , echo=TRUE}
+train_data_clean <- train_data[, colSums(is.na(train_data)) == 0] 
+test_data_clean <- test_data[, colSums(is.na(test_data)) == 0]
+```
+### Loading needed packages
+```{r loading , echo=TRUE}
+library(ggplot2)
+library(caret)
+library(rpart)
+library(rpart.plot)
+```
+### Partitioning data into training data as 75% and testing data into 25%
+```{r partitioning , echo=TRUE}
+inTrain<-createDataPartition(y=train_data_clean$classe, p=0.75, list=FALSE)
+partTraining<-train_data_clean[inTrain,]
+partTesting<-train_data_clean[-inTrain,]
+hist(summary(partTraining$classe))
+hist(summary(partTesting$classe))
+```
+# Training Model
+```{r training , echo=TRUE}
+set.seed(2222)
+DecTree <- rpart(classe~.,data=partTraining,method="class")
+```
+# Testing (Decision Tree)Model
+```{r testingDT , echo=TRUE}
+predictDT <- predict(DecTree,partTesting,type="class")
+confusionMatrix(predictDT,partTesting$classe)$overall
+```
+# Testing (Random Forest)Model
+```{r testingRF , echo=TRUE}
+controlRF <- trainControl(method="cv",number=3,verboseIter = FALSE)
+RanFor2 <- train(classe~., data=partTraining, method="rf",trControl=controlRF)
+predictRF <- predict(RanFor2,partTesting)
+confusionMatrix(predictRF,partTesting$classe)$overall
+```
